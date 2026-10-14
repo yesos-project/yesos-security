@@ -15,8 +15,11 @@ to or receives from the Internet crosses it, including the router's own Wi-Fi
 clients and the Intel ME / AMD PSP of any PC. With two NICs it has no address:
 it answers nothing and sends nothing of its own.
 
+Requirements (clang, lld, llvm, QEMU, Rust, Python): see the
+[yesos-core README](https://github.com/yesos-project/yesos-core#readme).
+
 ```bash
-git clone --recurse-submodules <url>/yesos-security   # or: git submodule update --init
+git clone --recurse-submodules https://github.com/yesos-project/yesos-security && cd yesos-security
 make prover-setup        # once (Z3, in core/tools/.venv)
 make                     # yesos.elf
 make run                 # QEMU with the bridge wired to a simulated modem and router (see below)
