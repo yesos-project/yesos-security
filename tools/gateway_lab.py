@@ -122,23 +122,23 @@ def main():
         events = []
         ip, site = rnd.choice(SITES)
         sport = rnd.randint(40000, 60000)
-        events.append((f"casa -> {site} ({ip}) HTTPS", lan, v4_frame(MODEM_MAC, ROUTER_MAC, ROUTER_IP, ip, 6, tcp(sport, 443)), wan, "web"))
+        events.append((f"house -> {site} ({ip}) HTTPS", lan, v4_frame(MODEM_MAC, ROUTER_MAC, ROUTER_IP, ip, 6, tcp(sport, 443)), wan, "web"))
         name = rnd.choice(NAMES)
         qid, q = td.query(name)
         server = rnd.choice(["8.8.8.8", "1.1.1.1", MODEM_IP])
-        events.append((f"casa pregunta {name} a {server}", lan,
+        events.append((f"house asks {server} for {name}", lan,
                        v4_frame(MODEM_MAC, ROUTER_MAC, ROUTER_IP, server, 17, udp(rnd.randint(40000, 60000), 53, q)), wan, ("dns", qid)))
         if tick % 5 == 0:
-            events.append(("Internet (203.0.113.66) prueba Intel AMT en el puerto 16992", wan,
+            events.append(("the Internet (203.0.113.66) probes Intel AMT on port 16992", wan,
                            v4_frame(ROUTER_MAC, MODEM_MAC, "203.0.113.66", ROUTER_IP, 6, tcp(rnd.randint(40000, 60000), 16992)), lan, "attack"))
         if tick % 7 == 0:
-            events.append(("un PC intenta AMT CIRA (llamar a casa, 198.51.100.20:4433)", lan,
+            events.append(("a PC tries AMT CIRA (calling home, 198.51.100.20:4433)", lan,
                            v4_frame(MODEM_MAC, ROUTER_MAC, ROUTER_IP, "198.51.100.20", 6, tcp(rnd.randint(40000, 60000), 4433)), wan, "attack"))
         if tick % 11 == 0:
-            events.append(("un PC intenta DASH / WS-Management (5986)", lan,
+            events.append(("a PC tries DASH / WS-Management (5986)", lan,
                            v4_frame(MODEM_MAC, ROUTER_MAC, ROUTER_IP, "198.51.100.21", 6, tcp(rnd.randint(40000, 60000), 5986)), wan, "attack"))
         if tick % 13 == 0:
-            events.append(("Internet envía RMCP/ASF (UDP 623)", wan,
+            events.append(("the Internet sends RMCP/ASF (UDP 623)", wan,
                            v4_frame(ROUTER_MAC, MODEM_MAC, "203.0.113.67", ROUTER_IP, 17, udp(rnd.randint(40000, 60000), 623, b"\x06\0\xff\x06" + b"\0" * 8)), lan, "attack"))
         for text, src, frame, dst, kind in events:
             t0 = time.time()
@@ -148,23 +148,23 @@ def main():
             if crossed:
                 bridge_up = True
             elif not bridge_up and kind in ("web", "attack"):
-                log(f"{text}: sin respuesta (YesOS todavía no reenvía: ¿está arrancando?)")
+                log(f"{text}: no answer (YesOS is not forwarding yet: still booting?)")
                 continue
             if kind == "attack" or kind == "web":
                 answered = kind == "web" and lan.saw(lambda f: f[12:14] == b"\x08\x00" and len(f) > 47 and f[23] == 6 and f[47] == 0x12
                                                     and struct.unpack(">H", f[36:38])[0] == struct.unpack(">H", frame[34:36])[0], t0)
-                log(f"{text}: {'cruzó' + (' y respondió' if answered else '') if crossed else 'BLOQUEADO por YesOS'}")
+                log(f"{text}: {'crossed' + (' and was answered' if answered else '') if crossed else 'BLOCKED by YesOS'}")
             else:
                 qid = kind[1]
                 ans = lan.saw(lambda f: f[12:14] == b"\x08\x00" and len(f) > 44 and f[23] == 17
                               and f[34:36] == b"\x00\x35" and f[42:44] == struct.pack(">H", qid), t0)
                 if ans is None:
-                    log(f"{text}: sin respuesta")
+                    log(f"{text}: no answer")
                 else:
                     r = td.parse(ans[42:])
-                    who = "Internet" if crossed else "el filtro DNS del NAS (interceptado)"
-                    res = "NXDOMAIN" if r["rcode"] == 3 else (", ".join(td.addr(r)) or "sin datos")
-                    log(f"{text}: {res} — respondió {who}" + (" — BLOQUEADO" if res in ("0.0.0.0", "NXDOMAIN") else ""))
+                    who = "Internet" if crossed else "the NAS DNS filter (intercepted)"
+                    res = "NXDOMAIN" if r["rcode"] == 3 else (", ".join(td.addr(r)) or "no data")
+                    log(f"{text}: {res} — answered by {who}" + (" — BLOCKED" if res in ("0.0.0.0", "NXDOMAIN") else ""))
         time.sleep(max(0.0, a.interval - 0.4 * len(events)))
 
 

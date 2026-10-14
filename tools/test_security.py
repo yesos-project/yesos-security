@@ -169,10 +169,10 @@ def three_port(disk, wan, lan, up):
         amt = [ln for ln in log.splitlines() if ":16994" in ln]
         check(len(amt) == 1 and "x5" in amt[0] and "203.0.113.66:443" in amt[0] and " in " in amt[0] and "AMT" in amt[0],
               f"fw log: 5 identical attempts in one line ({amt[:1]})")
-        r = console(vm, "fw add tcp 25 out any correo saliente")
-        check("Regla 1000" in r and blocked(lan, wan, out_tcp(25)) and passes(wan, lan, in_tcp(25, 40000)),
+        r = console(vm, "fw add tcp 25 out any outgoing mail")
+        check("Rule 1000" in r and blocked(lan, wan, out_tcp(25)) and passes(wan, lan, in_tcp(25, 40000)),
               "rule tcp 25 out: out blocked, in passes")
-        console(vm, "fw add udp 1000-2000 both 203.0.113.0/24 red sospechosa")
+        console(vm, "fw add udp 1000-2000 both 203.0.113.0/24 suspicious network")
         f1 = v4_frame(MODEM_MAC, ROUTER_MAC, ROUTER_IP, "203.0.113.9", 17, udp(40000, 1500, b"x"))
         f2 = v4_frame(MODEM_MAC, ROUTER_MAC, ROUTER_IP, "198.51.100.1", 17, udp(40000, 1500, b"x"))
         check(blocked(lan, wan, f1) and passes(lan, wan, f2), "port range + network rule matches only that network")
@@ -182,13 +182,13 @@ def three_port(disk, wan, lan, up):
         for bad in ["tcp 0 out any", "icmp 25 out any", "tcp 25 sideways any", "tcp 25 out 300.1.1.1", "tcp 30-20 out any"]:
             check("error" in console(vm, f"fw add {bad}", 1), f"invalid rule refused: '{bad}'")
         rules = console(vm, "fw rules")
-        line = next((ln for ln in rules.splitlines() if "correo saliente" in ln), "")
+        line = next((ln for ln in rules.splitlines() if "outgoing mail" in ln), "")
         fields = line.split()
         check(fields[:1] == ["1000"] and len(fields) > 6 and fields[6].isdigit() and int(fields[6]) >= 1,
               f"fw rules lists ids and hit counters ({line.strip()})")
         check("group amt    ON" in rules and "group dohip  off" in rules, "fw rules shows the groups")
         r = console(vm, "fw del 1000")
-        check("eliminada" in r and passes(lan, wan, out_tcp(25)), "rule deleted: tcp 25 passes again")
+        check("deleted" in r and passes(lan, wan, out_tcp(25)), "rule deleted: tcp 25 passes again")
         console(vm, "fw group amt off")
         ok_off = passes(wan, lan, in_tcp(16992))
         console(vm, "fw group amt on")
@@ -206,7 +206,7 @@ def three_port(disk, wan, lan, up):
         qid, q = td.query("example.org")
         check(passes(lan, wan, v4_frame(MODEM_MAC, ROUTER_MAC, ROUTER_IP, "8.8.8.8", 17, udp(53000, 53, q))),
               "interception off: DNS to 8.8.8.8 goes to the modem")
-        check("contestará" in console(vm, "fw intercept on"), "DNS interception switched on")
+        check("will be answered" in console(vm, "fw intercept on"), "DNS interception switched on")
         for name, server, want in (("example.org", "8.8.8.8", ["93.184.216.34"]), ("ads.mine.example", "1.1.1.1", ["0.0.0.0"])):
             qid, q = td.query(name)
             lan.clear()
@@ -254,7 +254,7 @@ def three_port(disk, wan, lan, up):
             time.sleep(0.05)
         el = time.time() - t0
         check(n >= 990, f"throughput: {n}/1000 frames forwarded in {el:.1f} s ({n / el:.0f} frames/s)")
-        check("Puertos intercambiados" in console(vm, "fw swap on"), "fw swap on (applies after a reboot)")
+        check("Ports swapped" in console(vm, "fw swap on"), "fw swap on (applies after a reboot)")
     finally:
         vm.stop()
 
@@ -269,7 +269,7 @@ def three_port(disk, wan, lan, up):
         check(blocked(wan, lan, v4_frame(MODEM_MAC, ROUTER_MAC, ROUTER_IP, "203.0.113.5", 6, tcp(40000, 4433))),
               "and 4433 leaving through the new LAN side is blocked as CIRA")
         rules = console(vm, "fw rules")
-        check("red sospechosa" in rules and "ssh v6" in rules and "correo saliente" not in rules and "group dohip  ON" in rules,
+        check("suspicious network" in rules and "ssh v6" in rules and "outgoing mail" not in rules and "group dohip  ON" in rules,
               "rules and groups kept across the reboot")
         qid, q = td.query("ads.mine.example")
         wan.clear()

@@ -181,7 +181,7 @@ I32 bridge_action(const char* action, const char* name, const char* value, const
                   char* msg, size_t msg_max) {
     I32 st = yc_fw_action(action, name, value, label, msg, msg_max);
     if (st == 200 && !save_fw()) {
-        ksnprintf(msg, msg_max, "Cambio aplicado, pero no se pudo guardar en el disco.");
+        ksnprintf(msg, msg_max, "Change applied, but it could not be saved to disk.");
         return 507;
     }
     return st;

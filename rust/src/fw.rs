@@ -138,9 +138,9 @@ impl Fw {
         self.ready = true;
         self.groups = alloc::vec![
             Group { key: "amt", title: "Intel AMT / ME (16992-16995, 623, 664, 9971)", enabled: true },
-            Group { key: "cira", title: "Intel AMT CIRA: conexiones salientes a 4433", enabled: true },
-            Group { key: "dash", title: "DASH / WS-Management (5985, 5986; también WinRM)", enabled: true },
-            Group { key: "dohip", title: "DNS cifrado por IP (DoH/DoT a resolvers públicos, DoT 853)", enabled: false },
+            Group { key: "cira", title: "Intel AMT CIRA: outgoing connections to 4433", enabled: true },
+            Group { key: "dash", title: "DASH / WS-Management (5985, 5986; also WinRM)", enabled: true },
+            Group { key: "dohip", title: "Encrypted DNS by IP (DoH/DoT to public resolvers, DoT 853)", enabled: false },
         ];
         let mut add = |g: u8, p: Proto, lo: u16, hi: u16, d: Dir, n: Net, l: &str, id: &mut u32| {
             self.rules.push(Rule { id: *id, group: g, proto: p, lo, hi, dir: d, net: n, label: String::from(l), hits: 0 });
@@ -149,21 +149,21 @@ impl Fw {
         let mut id = 1;
         add(G_AMT, Proto::Any, 16992, 16995, Dir::Both, Net::Any, "Intel AMT (web, SOL, IDE-R)", &mut id);
         add(G_AMT, Proto::Any, 623, 623, Dir::Both, Net::Any, "RMCP / ASF (AMT, DASH, IPMI)", &mut id);
-        add(G_AMT, Proto::Any, 664, 664, Dir::Both, Net::Any, "RMCP seguro (ASF)", &mut id);
-        add(G_AMT, Proto::Tcp, 9971, 9971, Dir::Both, Net::Any, "Aprovisionamiento remoto de AMT", &mut id);
-        add(G_CIRA, Proto::Tcp, 4433, 4433, Dir::Out, Net::Any, "AMT CIRA (el ME llama a un servidor)", &mut id);
+        add(G_AMT, Proto::Any, 664, 664, Dir::Both, Net::Any, "Secure RMCP (ASF)", &mut id);
+        add(G_AMT, Proto::Tcp, 9971, 9971, Dir::Both, Net::Any, "AMT remote provisioning", &mut id);
+        add(G_CIRA, Proto::Tcp, 4433, 4433, Dir::Out, Net::Any, "AMT CIRA (the ME calls a server)", &mut id);
         add(G_DASH, Proto::Tcp, 5985, 5986, Dir::Both, Net::Any, "DASH / WS-Management", &mut id);
-        add(G_DOHIP, Proto::Tcp, 853, 853, Dir::Out, Net::Any, "DNS sobre TLS (DoT)", &mut id);
+        add(G_DOHIP, Proto::Tcp, 853, 853, Dir::Out, Net::Any, "DNS over TLS (DoT)", &mut id);
         for ip in DOH_V4 {
             let prefix = if ip[3] == 0 { 24 } else { 32 };
-            add(G_DOHIP, Proto::Any, 443, 443, Dir::Out, Net::V4(u32::from_be_bytes(*ip), prefix), "DoH a un resolver público", &mut id);
+            add(G_DOHIP, Proto::Any, 443, 443, Dir::Out, Net::V4(u32::from_be_bytes(*ip), prefix), "DoH to a public resolver", &mut id);
         }
         for w in DOH_V6 {
             let mut b = [0u8; 16];
             for (i, x) in w.iter().enumerate() {
                 b[2 * i..2 * i + 2].copy_from_slice(&x.to_be_bytes());
             }
-            add(G_DOHIP, Proto::Any, 443, 443, Dir::Out, Net::V6(b, 128), "DoH a un resolver público", &mut id);
+            add(G_DOHIP, Proto::Any, 443, 443, Dir::Out, Net::V6(b, 128), "DoH to a public resolver", &mut id);
         }
     }
 
@@ -410,14 +410,14 @@ fn dir_str(d: Dir) -> &'static str {
 fn parse_rule(spec: &str, label: &str) -> Result<(Proto, u16, u16, Dir, Net, String), String> {
     let t: Vec<&str> = spec.split_whitespace().collect();
     if t.len() < 3 || t.len() > 4 {
-        return Err(String::from("Formato: <tcp|udp|any> <puerto o inicio-fin> <out|in|both> [IP, red/prefijo o any]"));
+        return Err(String::from("Format: <tcp|udp|any> <port or first-last> <out|in|both> [IP, network/prefix or any]"));
     }
     let proto = match t[0] { "tcp" => Proto::Tcp, "udp" => Proto::Udp, "any" => Proto::Any,
-                             _ => return Err(String::from("Protocolo: tcp, udp o any.")) };
-    let (lo, hi) = parse_ports(t[1]).ok_or_else(|| String::from("Puertos: un número 1-65535 o un rango inicio-fin."))?;
+                             _ => return Err(String::from("Protocol: tcp, udp or any.")) };
+    let (lo, hi) = parse_ports(t[1]).ok_or_else(|| String::from("Ports: a number 1-65535 or a range first-last."))?;
     let dir = match t[2] { "out" => Dir::Out, "in" => Dir::In, "both" => Dir::Both,
-                           _ => return Err(String::from("Dirección: out (hacia Internet), in (desde Internet) o both.")) };
-    let net = parse_net(t.get(3).copied().unwrap_or("any")).ok_or_else(|| String::from("IP o red no válida (ejemplo: 203.0.113.0/24)."))?;
+                           _ => return Err(String::from("Direction: out (to the Internet), in (from the Internet) or both.")) };
+    let net = parse_net(t.get(3).copied().unwrap_or("any")).ok_or_else(|| String::from("Invalid IP or network (example: 203.0.113.0/24)."))?;
     let label: String = label.chars().filter(|c| !c.is_control()).take(48).collect();
     Ok((proto, lo, hi, dir, net, label))
 }
@@ -476,48 +476,48 @@ impl Fw {
         match action {
             "fw_intercept" if on || off => {
                 self.intercept = on;
-                Ok(String::from(if on { "Las consultas DNS que salen a Internet las contestará el filtro DNS del NAS." }
-                                else { "Intercepción de DNS desactivada." }))
+                Ok(String::from(if on { "DNS queries going out to the Internet will be answered by the NAS DNS filter." }
+                                else { "DNS interception disabled." }))
             }
             "bridge_swap" if on || off => {
                 self.swap = on;
-                Ok(String::from("Puertos intercambiados: el cambio se aplica al reiniciar."))
+                Ok(String::from("Ports swapped: the change applies after a reboot."))
             }
             "fw_group" if on || off => match self.groups.iter_mut().find(|g| g.key == name) {
                 Some(g) => {
                     g.enabled = on;
-                    Ok(alloc::format!("{}: {}.", g.title, if on { "bloqueado" } else { "permitido" }))
+                    Ok(alloc::format!("{}: {}.", g.title, if on { "blocked" } else { "allowed" }))
                 }
-                None => Err((404, String::from("No existe ese grupo."))),
+                None => Err((404, String::from("No such group."))),
             },
             "fw_rule_add" => {
                 if self.rules.iter().filter(|r| r.group == USER).count() >= MAX_RULES {
-                    return Err((409, alloc::format!("Máximo {} reglas propias.", MAX_RULES)));
+                    return Err((409, alloc::format!("At most {} custom rules.", MAX_RULES)));
                 }
                 let (proto, lo, hi, dir, net, label) = parse_rule(value, label).map_err(|e| (400, e))?;
                 let id = self.next_id;
                 self.next_id += 1;
                 self.rules.push(Rule { id, group: USER, proto, lo, hi, dir, net, label, hits: 0 });
-                Ok(alloc::format!("Regla {} añadida: bloquear {} {} {} {}.", id, proto_str(proto),
+                Ok(alloc::format!("Rule {} added: block {} {} {} {}.", id, proto_str(proto),
                                   if lo == hi { alloc::format!("{}", lo) } else { alloc::format!("{}-{}", lo, hi) },
-                                  match dir { Dir::Out => "hacia Internet", Dir::In => "desde Internet", Dir::Both => "en ambos sentidos" },
-                                  if net == Net::Any { String::from("a cualquier dirección") } else { alloc::format!("para {}", fmt_net(net)) }))
+                                  match dir { Dir::Out => "to the Internet", Dir::In => "from the Internet", Dir::Both => "in both directions" },
+                                  if net == Net::Any { String::from("to any address") } else { alloc::format!("for {}", fmt_net(net)) }))
             }
             "fw_rule_del" => {
                 let id: u32 = name.parse().unwrap_or(0);
                 match self.rules.iter().position(|r| r.id == id && r.group == USER) {
                     Some(i) => {
                         self.rules.remove(i);
-                        Ok(alloc::format!("Regla {} eliminada.", id))
+                        Ok(alloc::format!("Rule {} deleted.", id))
                     }
-                    None => Err((404, String::from("No existe esa regla propia."))),
+                    None => Err((404, String::from("No such custom rule."))),
                 }
             }
             "fw_log" if value == "clear" => {
                 self.log.clear();
-                Ok(String::from("Registro del cortafuegos borrado."))
+                Ok(String::from("Firewall log cleared."))
             }
-            _ => Err((400, String::from("Acción o valor no válido."))),
+            _ => Err((400, String::from("Invalid action or value."))),
         }
     }
 }
