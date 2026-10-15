@@ -1,10 +1,10 @@
 # YesOS Security (RISC-V)
 
 An invisible bridge firewall built on the YesOS core (the `core` git
-submodule): Machine mode only, a locked Z3-proven PMP, no Linux, libc or binary
-blobs. It contains only the core, the core's DNS engine and the bridge
+submodule): Machine mode only, a locked Z3-proven PMP, an integer-only kernel
+(no floating point, checked at every build), no Linux, libc or binary blobs. It contains only the core, the core's DNS engine and the bridge
 firewall: no web panel, no TCP, no file services, no vault, no packages
-(377 KB of code). It is administered from the serial console only.
+(357 KiB of code). It is administered from the serial console only.
 
 ```text
 fiber ─► [ONT] ─► [YesOS Security] ─► [router] ─► the house (Wi-Fi and cables)
@@ -14,6 +14,9 @@ Placed on the cable between the ONT and the router, everything the house sends
 to or receives from the Internet crosses it, including the router's own Wi-Fi
 clients and the Intel ME / AMD PSP of any PC. With two NICs it has no address:
 it answers nothing and sends nothing of its own.
+
+Design choices, a comparison with Linux, seL4, Zephyr and TempleOS, and what is
+measured today: see the [yesos-core README](https://github.com/yesos-project/yesos-core#2-design-choices).
 
 Requirements (clang, lld, llvm, QEMU, Rust, Python): see the
 [yesos-core README](https://github.com/yesos-project/yesos-core#readme).
