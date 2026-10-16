@@ -15,6 +15,26 @@ modem and the router: with two NICs it has no address and sends nothing of its o
 
 </div>
 
+```text
+ __   __          ___   ____
+ \ \ / /___  ___ / _ \ / ___|
+  \ V // _ \/ __| | | |\___ \
+   | ||  __/\__ \ |_| | ___) |
+   |_| \___||___/\___/ |____/
+  ____                       _  _
+ / ___|  ___   ___ _   _ _ __(_)| |_ _   _
+ \___ \ / _ \ / __| | | | '__| || __| | | |
+  ___) |  __/| (__| |_| | |  | || |_| |_| |
+ |____/ \___| \___|\__,_|_|  |_| \__|\__, |
+                                     |___/
+
+  Invisible bridge firewall  -  RISC-V RV64GCV  -  Machine mode only
+  PMP locked, proven with Z3  -  no address on the wire  -  357 KiB
+```
+
+<sub>The console's banner at boot, with two NICs. The size is measured by the running system;
+with three NICs the second line says "an address on port 0 only", with one "no bridge: one NIC".</sub>
+
 ---
 
 An invisible bridge firewall built on the YesOS core (the `core` git
