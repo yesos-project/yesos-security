@@ -4,7 +4,9 @@ An invisible bridge firewall built on the YesOS core (the `core` git
 submodule): Machine mode only, a locked Z3-proven PMP, an integer-only kernel
 (no floating point, checked at every build), no Linux, libc or binary blobs. It contains only the core, the core's DNS engine and the bridge
 firewall: no web panel, no TCP, no file services, no vault, no packages
-(361 KiB of code). It is administered from the serial console only.
+(357 KiB of code). It is administered from the serial console only, a plain
+one (no line editor, no font, none of the Desktop's drivers: the build
+refuses an image that contains them).
 
 ```text
 fiber ─► [ONT] ─► [YesOS Security] ─► [router] ─► the house (Wi-Fi and cables)
