@@ -1,8 +1,26 @@
-# YesOS Security (RISC-V)
+<div align="center">
+
+# YesOS Security
+
+**An invisible bridge firewall on bare-metal RISC-V, between the fibre<br>
+modem and the router: with two NICs it has no address and sends nothing of its own.**
+
+<img alt="RISC-V RV64GCV" src="https://img.shields.io/badge/RISC--V-RV64GCV-283272?logo=riscv&logoColor=white">
+<img alt="Machine mode only" src="https://img.shields.io/badge/runs%20in-Machine%20mode-4a5568">
+<img alt="PMP proven with Z3" src="https://img.shields.io/badge/PMP-proven%20with%20Z3-6b46c1">
+<img alt="No floating point" src="https://img.shields.io/badge/floating%20point-none%2C%20checked-2f855a">
+<img alt="License MIT" src="https://img.shields.io/badge/license-MIT-2b6cb0">
+
+[Quick start](#quick-start) · [Layouts](#1-layouts) · [Firewall](#3-firewall--srcbridgec-rustsrcfwrs-corerustsrcframesrs) · [Tests](#7-tests) · [Limits](#8-honest-limits) · [YesOS core](https://github.com/yesos-project/yesos-core)
+
+</div>
+
+---
 
 An invisible bridge firewall built on the YesOS core (the `core` git
 submodule): Machine mode only, a locked Z3-proven PMP, an integer-only kernel
-(no floating point, checked at every build), no Linux, libc or binary blobs. It contains only the core, the core's DNS engine and the bridge
+(no floating point, checked at every build), no Linux, libc or binary blobs.
+It contains only the core, the core's DNS engine and the bridge
 firewall: no web panel, no TCP, no file services, no vault, no packages
 (357 KiB of code). It is administered from the serial console only, a plain
 one (no line editor, no font, none of the Desktop's drivers: the build
@@ -19,6 +37,8 @@ it answers nothing and sends nothing of its own.
 
 Design choices, a comparison with Linux, seL4, Zephyr and TempleOS, and what is
 measured today: see the [yesos-core README](https://github.com/yesos-project/yesos-core#2-design-choices).
+
+## Quick start
 
 Requirements (clang, lld, llvm, QEMU, Rust, Python): see the
 [yesos-core README](https://github.com/yesos-project/yesos-core#readme).
