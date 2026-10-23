@@ -29,10 +29,10 @@ modem and the router: with two NICs it has no address and sends nothing of its o
                                      |___/
 
   Invisible bridge firewall  -  RISC-V RV64GCV  -  Machine mode only
-  PMP locked, proven with Z3  -  no address on the wire  -  357 KiB
+  PMP locked, proven with Z3  -  no address on the wire  -  354 KiB
 ```
 
-<sub>The console's banner at boot, with two NICs. The size is measured by the running system;
+<sub>The console's banner at boot, with two NICs. The size is measured by the running system (its code and read-only data, a little less than the build's `.text` figure);
 with three NICs the second line says "an address on port 0 only", with one "no bridge: one NIC".</sub>
 
 ---
@@ -42,7 +42,7 @@ submodule): Machine mode only, a locked Z3-proven PMP, an integer-only kernel
 (no floating point, checked at every build), no Linux, libc or binary blobs.
 It contains only the core, the core's DNS engine and the bridge
 firewall: no web panel, no TCP, no file services, no vault, no packages
-(357 KiB of code). It is administered from the serial console only, a plain
+(355 KiB of code). It is administered from the serial console only, a plain
 one (no line editor, no font, none of the Desktop's drivers: the build
 refuses an image that contains them).
 
