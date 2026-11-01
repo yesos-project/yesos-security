@@ -11,7 +11,7 @@
 PRODUCT = security
 CORE_MODULES = dns
 # The Desktop's drivers must never be linked into this product.
-FORBIDDEN_SYMBOLS = hda_ audio_ display_ input_ terminal_ wav_ desktop_ surf_ files_ apps_ dd_ doldoc_
+FORBIDDEN_SYMBOLS = hda_ audio_ display_ input_ terminal_ wav_ desktop_ surf_ files_ apps_ svc_ launcher_ dd_ doldoc_
 PRODUCT_C_SRCS = $(wildcard src/*.c)
 DISK_MB = 64
 
